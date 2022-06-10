@@ -32,4 +32,4 @@ function buildts(targetFilename) {
   };
 }
 
-exports.default = parallel(buildts("main"));
+exports.default = parallel(buildts("app"));
