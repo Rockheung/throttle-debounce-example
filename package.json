@@ -1,0 +1,37 @@
+{
+  "name": "throttle-debounce-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "gulp"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.17.10",
+    "@babel/plugin-transform-runtime": "^7.17.10",
+    "@babel/preset-env": "^7.17.10",
+    "@types/jquery": "^1.10.39",
+    "@types/js-cookie": "^3.0.2",
+    "@types/lodash": "^4.14.182",
+    "babelify": "^10.0.0",
+    "browserify": "^17.0.0",
+    "gulp": "^4.0.2",
+    "gulp-sourcemaps": "^3.0.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "gulp-uglify": "^3.0.2",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.7.0",
+    "tsify": "^5.0.4",
+    "typescript": "^4.6.4",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.17.9",
+    "lodash": "^4.17.21"
+  }
+}
