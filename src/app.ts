@@ -6,6 +6,7 @@ declare global {
 
 const app = async ($parent: string) => {
   const $app = document.querySelector($parent);
+  if ($app) $app.innerHTML = `<header></header>`;
   return $app;
 };
 
