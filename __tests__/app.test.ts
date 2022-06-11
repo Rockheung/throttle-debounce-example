@@ -1,5 +1,7 @@
 import app from "../src/app";
 
-test("can mount app", () => {
-  expect(app("[data-app]")).not.toBe(null);
+document.body.innerHTML = `<div data-app=""></div>`;
+
+test("can mount app", async () => {
+  expect(await app("[data-app]")).not.toBe(null);
 });
