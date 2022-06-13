@@ -12,11 +12,11 @@ import root from './.internal/root.js'
  * debounced function. Subsequent calls to the debounced function return the
  * result of the last `func` invocation.
  * 
- * `func`실행을 지연시키는 디바운스된 함수를 만든다. 그 디바운스된 함수가 실행 되고 `wait 밀리초가
- * 지나기 전까지나, 그려지는 다음 브라우저 프레임 전까지.
+ * `func`실행을 지연시키는 디바운스된 함수를 만든다. 마지막 디바운스된 함수가 실행된 이후 `wait`
+ * 밀리초가 지났을 때까지나, 다음 브라우저 프레임이 그려질때까지.
  * 디바운스된 함수는 지연된 `func` 실행을 취소시키는 `cancel` 메서드와, 바로 실행 시키는 `flush`
- * 메서드와 함께 제공된다. 옵션이 제공되는데, `func`가 `wait`의 앞선 엣지 혹은 끝나는 엣지
- * 에서 실행할지 정할 수 있다. `func`는 디바운스된 함수에 제공된 마지막 인자들로 실행된다.
+ * 메서드와 함께 제공된다. 옵션으로 `func`가 `wait`의 앞선 엣지 혹은 끝나는 엣지
+ * 에서 실행할지 정할 수 있다. `func`는 디바운스된 함수에 마지막으로 제공된 인자들로 실행된다.
  * 디바운스된 함수에 이어지는 실행은 마지막 함수의 결과값을 반환한다.
  *
  * 
@@ -40,7 +40,7 @@ import root from './.internal/root.js'
  * 16ms).
  * 
  * `wait`이 `requestAnimationFrame`이 제공되는 환경에서 생략되면, `func` 실행은 다음 
- * 프레임이 그려질때까지 지연된다. (대개는 16ms)
+ * 프레임이 그려질때까지 지연된다. (대개는 약 16ms)
  * 
  *
  * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
@@ -187,7 +187,7 @@ function debounce(func, wait, options) {
   }
 
   // time = Date.now();
-  // 실행이 되어야 하는지 판단
+  // 실행이 되어야 하는지 판단.
   function shouldInvoke(time) {
     const timeSinceLastCall = time - lastCallTime
     const timeSinceLastInvoke = time - lastInvokeTime
@@ -197,13 +197,14 @@ function debounce(func, wait, options) {
     // it as the trailing edge, or we've hit the `maxWait` limit.
     // 
     // timeSinceLastCall < 0: 이상한 옵션인듯. true일 가능성이 있는가?
+    // `timeSinceLastCall >= wait`이랑 맞추려고 그냥 방어코드 목적으로 적은듯
     // 실행한 적이 없거나, 
     return (lastCallTime === undefined || (timeSinceLastCall >= wait) ||
       (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait))
   }
 
   // 현재 시간에 기반하여 실행되어야 하는 시점이면 trailingEdge로 invokeFunc
-  // 재귀적으로 다시 스스로를 macro task queue에 집어넣고, 
+  // 재귀적으로 다시 스스로를 macro task queue에 집어넣고, timerId 재설정
   function timerExpired() {
     const time = Date.now()
     if (shouldInvoke(time)) {
@@ -213,6 +214,9 @@ function debounce(func, wait, options) {
     timerId = startTimer(timerExpired, remainingWait(time))
   }
 
+  // time = Date.now();
+  // 기존의 타이머 등록을 해지하고, `options.trailing`이 true면 `func`실행.
+  // `lastArgs`가 있다는건 한 번 이상 `func`가 실행되었단 얘기.
   function trailingEdge(time) {
     timerId = undefined
 
@@ -225,6 +229,7 @@ function debounce(func, wait, options) {
     return result
   }
 
+  // 타이머를 바로 취소하고 나머지도 초기화.
   function cancel() {
     if (timerId !== undefined) {
       cancelTimer(timerId)
@@ -233,29 +238,43 @@ function debounce(func, wait, options) {
     lastArgs = lastCallTime = lastThis = timerId = undefined
   }
 
+  // 즉시 실행하고 바로 실행.
   function flush() {
     return timerId === undefined ? result : trailingEdge(Date.now())
   }
 
+  // 대기중인 함수가 있는지 boolean
   function pending() {
     return timerId !== undefined
   }
 
+  // 리턴되는 함수. 사용자는 이 함수를 실행시키게 된다.
   function debounced(...args) {
+    // 실행한 시점
     const time = Date.now()
+    // 당장 실행이 되어야 하나?
     const isInvoking = shouldInvoke(time)
 
+    // 제공받은 args
     lastArgs = args
+    // 실행하는 컨텍스트에서의 this
     lastThis = this
+    // 마지막으로 호출된 타임: 현재
     lastCallTime = time
 
+    // 당장 실행할건가?
     if (isInvoking) {
+      // 어떠한 타이머도 안 걸릴때 - 맨 처음이나 앞선 함수 이후 충분한 시간이 주어졌을때.
       if (timerId === undefined) {
+        // 시작하는 엣지에서 호출된 시간 - 현재 - 를 체킹하여 실행할지 결정
         return leadingEdge(lastCallTime)
       }
+      // maxWait 를 사용하면
       if (maxing) {
         // Handle invocations in a tight loop.
+        // 지연시간만큼 실행을 지연시킴
         timerId = startTimer(timerExpired, wait)
+        
         return invokeFunc(lastCallTime)
       }
     }
